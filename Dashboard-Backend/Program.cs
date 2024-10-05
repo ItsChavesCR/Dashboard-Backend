@@ -1,3 +1,5 @@
+using Dashboard_Backend.Hubs;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -6,6 +8,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -17,9 +20,17 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Configurar los endpoints de la aplicación
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();  
+    endpoints.MapHub<ChartHub>("/chartHub");
+});
 
 app.Run();
