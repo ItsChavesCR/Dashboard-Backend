@@ -11,6 +11,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins", policy =>
+    {
+        policy.AllowAnyOrigin()    // Permite todas las URLs
+              .AllowAnyHeader()    // Permite cualquier encabezado
+              .AllowAnyMethod();   // Permite cualquier método (GET, POST, etc.)
+    });
+});
 // Configurar JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
@@ -47,7 +56,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseCors("AllowAllOrigins");
 app.UseRouting();
 
 // Middleware de autenticación y autorización
