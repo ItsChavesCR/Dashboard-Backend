@@ -1,0 +1,45 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.SignalR.Client
+@implements IAsyncDisposable
+
+<h1>Dashboard Notifications</h1>
+
+<ul>
+    @foreach (var message in _messages)
+    {
+        <li>@message</li>
+    }
+</ul>
+
+@code
+{
+    private HubConnection? _hubConnection;
+    private readonly List<string> _messages = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Inicializamos la conexión con el hub de notificaciones
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl("https://localhost:7230/notifications") // Ajusta la URL si es necesario
+            .Build();
+
+        // Escuchamos el evento "ReceiveNotification" para recibir mensajes desde el servidor
+        _hubConnection.On<string>("ReceiveNotification", message =>
+        {
+            _messages.Add(message);
+            InvokeAsync(StateHasChanged); // Actualiza la interfaz
+        });
+
+        // Iniciamos la conexión
+        await _hubConnection.StartAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Nos desconectamos al salir
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.DisposeAsync();
+        }
+    }
+}
