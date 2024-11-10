@@ -47,31 +47,41 @@ namespace Dashboard_Backend.Controllers
         [HttpPost("register")]
         public IActionResult Register([FromBody] RegisterRequest registerRequest)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                // Verificar si el usuario ya existe
+                if (Users.Any(u => u.Username == registerRequest.Username))
+                {
+                    return BadRequest("El nombre de usuario ya está en uso.");
+                }
+
+                // Hashear la contraseña
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password);
+
+                // Crear nuevo usuario y agregarlo a la lista simulada
+                var newUser = new User
+                {
+                    UserId = Users.Count + 1,  // Simulación de incremento de ID
+                    Username = registerRequest.Username,
+                    PasswordHash = passwordHash
+                };
+
+                Users.Add(newUser);
+
+                return Ok("Usuario registrado exitosamente.");
             }
-
-            // Verificar si el usuario ya existe
-            if (Users.Any(u => u.Username == registerRequest.Username))
+            catch (Exception ex)
             {
-                return BadRequest("El nombre de usuario ya está en uso.");
+                // Registrar el error y devolver una respuesta de error genérica
+                Console.WriteLine($"Error en el registro: {ex.Message}");
+                return StatusCode(500, "Ocurrió un error en el servidor.");
             }
-
-            // Hashear la contraseña
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password);
-
-            // Crear nuevo usuario y agregarlo a la lista simulada
-            var newUser = new User
-            {
-                UserId = Users.Count + 1,  // Simulación de incremento de ID
-                Username = registerRequest.Username,
-                PasswordHash = passwordHash
-            };
-
-            Users.Add(newUser);
-
-            return Ok("Usuario registrado exitosamente.");
         }
+
     }
 }

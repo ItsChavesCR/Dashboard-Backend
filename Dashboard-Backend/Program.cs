@@ -1,39 +1,99 @@
 using Dashboard.SignalR;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Dashboard_Backend.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Agregar servicios de SignalR, controladores, y el servicio de notificación
+// Configura JWT
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+// Configura CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Origen del frontend
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Permitir credenciales si estás usando autenticación con cookies o SignalR
+    });
+});
+
+// Agregar servicios de SignalR y controladores
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<ServerTimeNotifier>();
-builder.Services.AddCors();
-builder.Services.AddControllers(); // Agregar servicios para controladores
+builder.Services.AddControllers();
+builder.Services.AddSingleton<TokenService>();
 
-// Agregar Swagger para la documentación de la API
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Configuración de Swagger con autenticación JWT
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Ingrese 'Bearer' seguido de su token JWT."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 var app = builder.Build();
 
-// Configuración para el entorno de desarrollo
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 app.UseHttpsRedirection();
+
+// Habilita autenticación y autorización
+app.UseAuthentication();
 app.UseAuthorization();
 
-// Mapear los hubs de SignalR
+// Usa la política CORS
+app.UseCors("AllowFrontend");
+
+// Configura Swagger
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// Mapea hubs de SignalR
 app.MapHub<ChatHub>("/Chat-hub");
 app.MapHub<NotificationHub>("/notifications");
 
-// Mapear controladores, incluido el WeatherForecastController
+// Mapea controladores
 app.MapControllers();
 
 app.Run();
