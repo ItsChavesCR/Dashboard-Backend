@@ -1,71 +1,99 @@
+using Dashboard.SignalR;
+using Dashboard_Backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
-using Dashboard_Backend.Services;
-using Dashboard_Backend.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Configura JWT
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
 
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+// Configura CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAllOrigins", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()    // Permite todas las URLs
-              .AllowAnyHeader()    // Permite cualquier encabezado
-              .AllowAnyMethod();   // Permite cualquier método (GET, POST, etc.)
+        policy.WithOrigins("http://localhost:5173") // Origen del frontend
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Permitir credenciales si estás usando autenticación con cookies o SignalR
     });
 });
-// Configurar JWT Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-    };
-});
 
-// Agregar servicio de Token
-builder.Services.AddScoped<TokenService>();
-
-// SignalR
+// Agregar servicios de SignalR y controladores
 builder.Services.AddSignalR();
+builder.Services.AddHostedService<ServerTimeNotifier>();
+builder.Services.AddControllers();
+builder.Services.AddSingleton<TokenService>();
+
+// Configuración de Swagger con autenticación JWT
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Ingrese 'Bearer' seguido de su token JWT."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
 app.UseHttpsRedirection();
-app.UseCors("AllowAllOrigins");
-app.UseRouting();
 
-// Middleware de autenticación y autorización
+// Habilita autenticación y autorización
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+// Usa la política CORS
+app.UseCors("AllowFrontend");
 
-// Configurar Hubs de SignalR
-app.MapHub<ChartHub>("/chartHub");
+// Configura Swagger
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// Mapea hubs de SignalR
+app.MapHub<ChatHub>("/Chat-hub");
+app.MapHub<NotificationHub>("/notifications");
+
+// Mapea controladores
+app.MapControllers();
 
 app.Run();
