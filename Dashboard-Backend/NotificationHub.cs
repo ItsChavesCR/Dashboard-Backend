@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Dashboard.SignalR
 {
+    [Authorize]
     public class NotificationHub : Hub<IReceiveNotification>
     {
         public override async Task OnConnectedAsync()
