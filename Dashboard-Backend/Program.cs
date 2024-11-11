@@ -1,4 +1,5 @@
 using Dashboard.SignalR;
+using Dashboard_Backend.Models;
 using Dashboard_Backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -40,6 +41,7 @@ builder.Services.AddCors(options =>
 });
 
 // Agregar servicios de SignalR y controladores
+builder.Services.Configure<ServiceBusSettings>(builder.Configuration.GetSection("ServiceBus"));
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<ServerTimeNotifier>();
 builder.Services.AddControllers();
@@ -76,6 +78,10 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+//var serviceBusProcessor = app.Services.GetRequiredService<ServiceBusProcessorService>();
+//var cts = new CancellationTokenSource();
+//await serviceBusProcessor.StartProcessingMessagesAsync(cts.Token);
+
 app.UseHttpsRedirection();
 
 // Habilita autenticación y autorización
@@ -89,9 +95,11 @@ app.UseCors("AllowFrontend");
 app.UseSwagger();
 app.UseSwaggerUI();
 
+
+
 // Mapea hubs de SignalR
-app.MapHub<ChatHub>("/Chat-hub");
-app.MapHub<NotificationHub>("/notifications");
+app.MapHub<SalesHub>("/hub/Saleshub");
+app.MapHub<NotificationHub>("/hub/notificationhub"); // Corrige aquí el nombre del endpoint si era incorrecto
 
 // Mapea controladores
 app.MapControllers();
