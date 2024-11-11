@@ -60,7 +60,7 @@ namespace Dashboard_Backend.Controllers
                     return BadRequest("El nombre de usuario ya está en uso.");
                 }
 
-                // Hashear la contraseña
+                //// Hashear la contraseña
                 var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password);
 
                 // Crear nuevo usuario y agregarlo a la lista simulada
