@@ -9,17 +9,16 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copiar el archivo .csproj desde su ubicación
-# Nota: Este asume que el Dockerfile está en la raíz del proyecto
-COPY Dashboard-Backend.csproj ./ 
+COPY ["Dashboard-Backend/Dashboard-Backend.csproj", "Dashboard-Backend/"]
 
 # Restaurar dependencias para todos los proyectos
-RUN dotnet restore "Dashboard-Backend.csproj"
+RUN dotnet restore "Dashboard-Backend/Dashboard-Backend.csproj"
 
-# Copiar todo el código fuente
+# Copiar todo el código fuente excepto lo que está en .dockerignore
 COPY . .
 
 # Establecer directorio de trabajo y compilar la aplicación
-WORKDIR "/src"
+WORKDIR "/src/Dashboard-Backend"
 RUN dotnet build "Dashboard-Backend.csproj" -c Release -o /app/build
 
 # Publicar la aplicación
