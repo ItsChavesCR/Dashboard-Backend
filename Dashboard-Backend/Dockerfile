@@ -9,7 +9,8 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Dashboard-Backend/Dashboard-Backend.csproj", "Dashboard-Backend/"]
+COPY ["./Dashboard-Backend/Dashboard-Backend.csproj", "Dashboard-Backend/"]
+
 RUN dotnet restore "./Dashboard-Backend/Dashboard-Backend.csproj"
 COPY . .
 WORKDIR "/src/Dashboard-Backend"
