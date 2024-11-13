@@ -1,17 +1,17 @@
-﻿
-using Azure.Messaging.ServiceBus;
+﻿using Azure.Messaging.ServiceBus;
 using Dashboard_Backend.Models;
 using Microsoft.Extensions.Options;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-
 namespace Dashboard_Backend.Services;
+
 public class ServiceBusProcessorService
 {
     private readonly ServiceBusClient _client;
     private readonly string _queueName;
+    private ServiceBusProcessor _processor;
 
     public ServiceBusProcessorService(IOptions<ServiceBusSettings> serviceBusSettings)
     {
@@ -22,19 +22,25 @@ public class ServiceBusProcessorService
 
     public async Task StartProcessingMessagesAsync(CancellationToken cancellationToken)
     {
-        var processor = _client.CreateProcessor(_queueName, new ServiceBusProcessorOptions());
+        _processor = _client.CreateProcessor(_queueName, new ServiceBusProcessorOptions());
 
-        processor.ProcessMessageAsync += MessageHandler;
-        processor.ProcessErrorAsync += ErrorHandler;
+        _processor.ProcessMessageAsync += MessageHandler;
+        _processor.ProcessErrorAsync += ErrorHandler;
 
-        await processor.StartProcessingAsync();
+        await _processor.StartProcessingAsync(cancellationToken);
         Console.WriteLine("Esperando mensajes...");
 
-        cancellationToken.Register(async () =>
+        cancellationToken.Register(async () => await StopProcessingMessagesAsync());
+    }
+
+    private async Task StopProcessingMessagesAsync()
+    {
+        if (_processor != null)
         {
-            await processor.StopProcessingAsync();
-            await processor.DisposeAsync();
-        });
+            await _processor.StopProcessingAsync();
+            await _processor.DisposeAsync();
+            Console.WriteLine("Procesador de mensajes detenido.");
+        }
     }
 
     private async Task MessageHandler(ProcessMessageEventArgs args)
@@ -48,7 +54,9 @@ public class ServiceBusProcessorService
 
     private Task ErrorHandler(ProcessErrorEventArgs args)
     {
-        Console.WriteLine($"Error: {args.Exception.Message}");
+        Console.WriteLine($"Error al procesar mensaje: {args.Exception.Message}");
+        Console.WriteLine($"Contexto del error: {args.ErrorSource}");
+        Console.WriteLine($"Entidad del error: {args.EntityPath}");
         return Task.CompletedTask;
     }
 }
