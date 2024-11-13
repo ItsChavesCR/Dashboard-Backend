@@ -1,3 +1,4 @@
+using Azure.Messaging.ServiceBus;
 using Dashboard.SignalR;
 using Dashboard_Backend.Models;
 using Dashboard_Backend.Services;
@@ -43,9 +44,10 @@ builder.Services.AddCors(options =>
 // Agregar servicios de SignalR y controladores
 builder.Services.Configure<ServiceBusSettings>(builder.Configuration.GetSection("ServiceBus"));
 builder.Services.AddSignalR();
-builder.Services.AddHostedService<ServerTimeNotifier>();
 builder.Services.AddControllers();
 builder.Services.AddSingleton<TokenService>();
+builder.Services.AddSingleton(new ServiceBusClient("Endpoint=sb://paradigmas-service-bus.servicebus.windows.net/;SharedAccessKeyName=listen-policy-connection-string;SharedAccessKey=7AdbxZ/iMdrla0JGj0jzanlXeXva3Q7Yw+ASbAZjWJw="));
+builder.Services.AddHostedService<ServiceBusListenerService>();
 
 // Configuración de Swagger con autenticación JWT
 builder.Services.AddSwaggerGen(options =>
