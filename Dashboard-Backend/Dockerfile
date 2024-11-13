@@ -10,16 +10,16 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 # Copiar el archivo .csproj desde su ubicación
-COPY ["Dashboard-Backend/Dashboard-Backend.csproj", "Dashboard-Backend/"]
+COPY ["Dashboard-Backend.csproj", "./"]
 
 # Restaurar dependencias para todos los proyectos
-RUN dotnet restore "Dashboard-Backend/Dashboard-Backend.csproj"
+RUN dotnet restore "Dashboard-Backend.csproj"
 
 # Copiar todo el código fuente
 COPY . .
 
 # Establecer directorio de trabajo y compilar la aplicación
-WORKDIR "/src/Dashboard-Backend"
+WORKDIR "/src"
 RUN dotnet build "Dashboard-Backend.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Publicar la aplicación
