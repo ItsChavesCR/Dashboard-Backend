@@ -8,13 +8,13 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copiar el archivo .csproj desde su ubicación
-COPY Dashboard-Backend/Dashboard-Backend.csproj Dashboard-Backend/
+# Copiar el archivo .csproj desde la carpeta correcta
+COPY Dashboard-Backend.csproj ./ 
 
-# Restaurar dependencias para todos los proyectos
+# Restaurar dependencias
 RUN dotnet restore "Dashboard-Backend/Dashboard-Backend.csproj"
 
-# Copiar todo el código fuente
+# Copiar todo el código fuente desde el contexto de construcción
 COPY . .
 
 # Establecer directorio de trabajo y compilar la aplicación
