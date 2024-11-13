@@ -9,16 +9,16 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copiar el archivo .csproj desde la carpeta correcta
-COPY Dashboard-Backend.csproj ./ 
+COPY Dashboard-Backend/Dashboard-Backend.csproj Dashboard-Backend/
 
 # Restaurar dependencias
-RUN dotnet restore "Dashboard-Backend/Dashboard-Backend.csproj"
+WORKDIR /src/Dashboard-Backend
+RUN dotnet restore
 
 # Copiar todo el código fuente desde el contexto de construcción
 COPY . .
 
 # Establecer directorio de trabajo y compilar la aplicación
-WORKDIR "/src/Dashboard-Backend"
 RUN dotnet build "Dashboard-Backend.csproj" -c Release -o /app/build
 
 # Publicar la aplicación
