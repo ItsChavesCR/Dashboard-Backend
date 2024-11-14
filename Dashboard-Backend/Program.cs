@@ -100,7 +100,7 @@ app.UseSwaggerUI();
 
 
 // Mapea hubs de SignalR
-app.MapHub<SalesHub>("/hub/Saleshub");
+app.MapHub<SalesHub>("/hub/Saleshub").RequireCors("AllowFrontend");
 app.MapHub<NotificationHub>("/hub/notificationhub"); // Corrige aquí el nombre del endpoint si era incorrecto
 
 // Mapea controladores
