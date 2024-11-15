@@ -1,12 +1,11 @@
 ﻿namespace Dashboard_Backend.Models
 {
     public class SalesData
-    {
-        public int Id { get; set; }
-        public string Producto { get; set; }
-        public int Cantidad { get; set; }
-        public decimal Precio { get; set; }
-        public DateTime Fecha { get; set; }
+    { 
+        public string Id { get; set; }
+       public string ProductId { get; set; }
+        public ProductData Product { get; set; }
+       public string AffiliateId { get; set; }
+      public string CardId { get; set; }
     }
-
 }

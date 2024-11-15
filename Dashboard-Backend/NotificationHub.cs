@@ -1,6 +1,7 @@
 ﻿using Dashboard_Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using System.Threading.Tasks;
 
 namespace Dashboard.SignalR
 {
@@ -9,13 +10,23 @@ namespace Dashboard.SignalR
     {
         public override async Task OnConnectedAsync()
         {
-            await Clients.Client(Context.ConnectionId).ReceiveSalesData(new SalesData { Id = 0, Producto = "Conexión establecida", Cantidad = 0, Precio = 0, Fecha = DateTime.Now });
+            // Enviar una notificación de conexión establecida con datos simplificados
+            var initialData = new SimplifiedSalesData
+            {
+                Name = "Conexión establecida",
+                Description = "Conexión inicial al hub de notificaciones",
+                Price = 0,
+                AffiliateId = string.Empty,
+                CardId = string.Empty
+            };
+
+            await Clients.Client(Context.ConnectionId).ReceiveSalesData(initialData);
             await base.OnConnectedAsync();
         }
     }
 
     public interface IReceiveNotification
     {
-        Task ReceiveSalesData(SalesData salesData);
+        Task ReceiveSalesData(SimplifiedSalesData salesData);
     }
 }
