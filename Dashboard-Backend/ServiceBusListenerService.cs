@@ -2,6 +2,7 @@
 using Dashboard_Backend.Models;
 using Microsoft.AspNetCore.SignalR;
 using Dashboard.SignalR;
+using System.Text.Json;
 
 public class ServiceBusListenerService : BackgroundService
 {
@@ -21,18 +22,36 @@ public class ServiceBusListenerService : BackgroundService
 
         processor.ProcessMessageAsync += async args =>
         {
-            var body = args.Message.Body.ToObjectFromJson<SalesData>();
+            try
+            {
+                // Deserialize message body
+                var body = args.Message.Body.ToObjectFromJson<SimplifiedSalesData>();
 
-            // Broadcast to SignalR clients
-            await _hubContext.Clients.All.ReceiveSalesData(body);
+                // Transform into simplified model
+                var simplifiedData = new SimplifiedSalesData
+                {
+                    Name = body.Name,
+                    Description = body.Description,
+                    Price = body.Price,
+                    AffiliateId = body.AffiliateId
+                };
 
-            // Complete the message so it is not received again
-            await args.CompleteMessageAsync(args.Message);
+                // Broadcast simplified data to SignalR clients
+                await _hubContext.Clients.All.ReceiveSalesData(JsonSerializer.Serialize(simplifiedData));
+
+                // Complete the message so it is not received again
+                await args.CompleteMessageAsync(args.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing message: {ex.Message}");
+                // Optionally: Dead-letter the message or take corrective action
+            }
         };
 
         processor.ProcessErrorAsync += args =>
         {
-            Console.WriteLine($"Error: {args.Exception}");
+            Console.WriteLine($"Error: {args.Exception.Message}");
             return Task.CompletedTask;
         };
 
