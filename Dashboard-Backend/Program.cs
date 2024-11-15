@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://dashboard-frontend-kohl.vercel.app/") // Origen del frontend
+        policy.WithOrigins("http://localhost:5173", "https://dashboard-frontend-kohl.vercel.app") // Origen del frontend
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // Permitir credenciales si estás usando autenticación con cookies o SignalR
