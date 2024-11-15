@@ -24,16 +24,21 @@ public class ServiceBusListenerService : BackgroundService
         {
             try
             {
-                // Deserialize message body
-                var body = args.Message.Body.ToObjectFromJson<SimplifiedSalesData>();
+                // Deserialize message body to SalesData
+                var body = args.Message.Body.ToObjectFromJson<SalesData>();
 
-                // Transform into simplified model
+                // Mostrar datos completos en la consola
+                Console.WriteLine("Mensaje recibido desde Service Bus:");
+                Console.WriteLine(JsonSerializer.Serialize(body, new JsonSerializerOptions { WriteIndented = true }));
+
+                // Transform to SimplifiedSalesData
                 var simplifiedData = new SimplifiedSalesData
                 {
-                    Name = body.Name,
-                    Description = body.Description,
-                    Price = body.Price,
-                    AffiliateId = body.AffiliateId
+                    Name = body.Product.Name,
+                    Description = body.Product.Description,
+                    Price = body.Product.Price,
+                    AffiliateId = body.AffiliateId,
+                    CardId = body.CardId
                 };
 
                 // Broadcast simplified data to SignalR clients
