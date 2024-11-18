@@ -41,8 +41,12 @@ public class ServiceBusListenerService : BackgroundService
                     CardId = body.CardId
                 };
 
-                // Broadcast simplified data to SignalR clients
-                await _hubContext.Clients.All.ReceiveSalesData(JsonSerializer.Serialize(simplifiedData));
+                // Serializa el objeto SimplifiedSalesData a JSON
+                string serializedData = JsonSerializer.Serialize(simplifiedData);
+
+                // Enviar los datos serializados a través de SignalR
+                await _hubContext.Clients.All.ReceiveSalesData(serializedData);
+
 
                 // Complete the message so it is not received again
                 await args.CompleteMessageAsync(args.Message);
