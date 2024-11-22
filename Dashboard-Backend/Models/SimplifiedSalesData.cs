@@ -7,6 +7,8 @@
         public decimal Price { get; set; }
         public string AffiliateId { get; set; }
         public string CardId { get; set; }
+        public DateTime PurchaseDate { get; set; } // Nueva propiedad
+        public decimal Amount { get; set; } // Nueva propiedad
     }
 
     public class ProductData
