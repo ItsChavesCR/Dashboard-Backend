@@ -32,14 +32,15 @@ public class ServiceBusListenerService : BackgroundService
                 Console.WriteLine(JsonSerializer.Serialize(body, new JsonSerializerOptions { WriteIndented = true }));
 
                 // Transform to SimplifiedSalesData
-                var simplifiedData = new SimplifiedSalesData
+                var simplifiedData = body.Products.Select(product => new SimplifiedSalesData
                 {
-                    Name = body.Product.Name,
-                    Description = body.Product.Description,
-                    Price = body.Product.Price,
+                    Name = product.Name,
+                    Description = product.Description,
+                    Price = product.Price,
                     AffiliateId = body.AffiliateId,
-                    CardId = body.CardId
-                };
+                    PurchaseDate = body.PurchaseDate,
+                    Amount = body.Amount,
+                }).ToList();
 
                 // Serializa el objeto SimplifiedSalesData a JSON
                 string serializedData = JsonSerializer.Serialize(simplifiedData);
